@@ -1,219 +1,495 @@
 <!DOCTYPE html>
-<html lang="hu-HU">
+<html lang="hu">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeBrowse Pro | Prémium Weboldal Analitika</title>
+    <meta name="description" content="Ellenőrizze weboldalak megbízhatóságát, domain korát és biztonságát.">
+    <title>SafeBrowse Pro | Webshop Legitimitás Ellenőrző</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         
+        :root {
+            --primary: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0f172a;
+        }
+
         body { 
-            background: #020617; 
+            background-color: var(--bg-dark);
             color: #f8fafc;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            scroll-behavior: smooth;
+            font-family: 'Inter', sans-serif;
             overflow-x: hidden;
         }
 
-        /* Parallax háttér effektus */
-        .bg-glow {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 50% -20%, #1e1b4b 0%, #020617 80%);
+        /* --- Parallax Background --- */
+        .parallax-bg {
+            position: fixed; top: -10%; left: -10%; width: 120%; height: 120%;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 70%);
+            z-index: -2;
+            transition: transform 0.1s ease-out;
+        }
+        .grid-overlay {
+            position: fixed; inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
             z-index: -1;
+            mask-image: radial-gradient(circle at center, black, transparent 80%);
         }
 
+        /* --- Glassmorphism --- */
         .glass {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(16px);
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
-        .hero-gradient {
-            background: linear-gradient(135deg, #60a5fa 0%, #c084fc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        /* --- Animations --- */
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        
+        .loading-bar {
+            width: 100%; height: 4px; background: #1e293b; overflow: hidden; position: relative;
         }
+        .loading-bar::after {
+            content: ''; position: absolute; left: -50%; width: 50%; height: 100%;
+            background: var(--primary); animation: load 1.5s infinite linear;
+        }
+        @keyframes load { 0% { left: -50%; } 100% { left: 150%; } }
 
-        /* Szkenner animáció */
-        .scanner-line {
-            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
-            background: linear-gradient(90deg, transparent, #60a5fa, transparent);
-            animation: scan 2s linear infinite;
-            display: none;
-        }
-
-        @keyframes scan {
-            0% { top: 0%; opacity: 0; }
-            50% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
+        /* --- Custom UI Elements --- */
+        .trust-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; }
+        .badge-green { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-yellow { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-red { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
 
         .modal {
-            display: none; position: fixed; inset: 0; z-index: 50;
-            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
-            align-items: center; justify-content: center;
+            display: none; position: fixed; inset: 0; z-index: 100;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+            justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease;
         }
-
-        .status-pulse {
-            width: 8px; height: 8px; border-radius: 50%; background: #22c55e;
-            display: inline-block; margin-right: 8px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
+        .modal.active { display: flex; opacity: 1; }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col">
 
-    <div class="bg-glow"></div>
+    <div class="parallax-bg" id="parallaxBg"></div>
+    <div class="grid-overlay"></div>
 
-    <nav class="sticky top-0 z-40 p-6 glass border-b border-white/5">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3 font-extrabold text-2xl tracking-tight">
-                <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20">
-                    <i class="fas fa-shield-halved text-white"></i>
+    <nav class="sticky top-0 z-50 border-b border-white/10 glass">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-lg text-white"><i class="fas fa-shield-alt text-xl"></i></div>
+                <div class="leading-none">
+                    <h1 class="font-bold text-xl tracking-tight text-white">SafeBrowse<span class="text-blue-500">Pro</span></h1>
+                    <span class="text-[10px] text-slate-400 uppercase tracking-widest">Trust Checker</span>
                 </div>
-                <span>SAFE<span class="text-blue-500">BROWSE</span> PRO</span>
             </div>
-            <div class="hidden md:flex gap-10 text-sm font-semibold text-slate-400">
-                <a href="javascript:void(0)" onclick="openModal('how-it-works')" class="hover:text-blue-400 transition">Hogyan működik?</a>
-                <a href="javascript:void(0)" onclick="openModal('privacy')" class="hover:text-blue-400 transition">Adatvédelem</a>
+            
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+                <a href="#how-it-works" class="hover:text-white transition" data-i18n="nav_how">Hogyan működik?</a>
+                <button onclick="openModal('about-modal')" class="hover:text-white transition" data-i18n="nav_about">Rólunk</button>
+                <button onclick="toggleLang()" class="flex items-center gap-2 border border-white/10 px-3 py-1.5 rounded-full hover:bg-white/5 transition text-white">
+                    <i class="fas fa-globe"></i> <span id="currentLang">HU</span>
+                </button>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-4xl mx-auto px-6 pt-24 pb-32">
-        <div class="text-center mb-16">
-            <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold tracking-widest uppercase mb-6">
-                <span class="status-pulse"></span> Rendszer Aktív: v3.1 Deep Scan
+    <main class="flex-grow">
+        
+        <section class="pt-24 pb-16 px-6 text-center max-w-4xl mx-auto">
+            <div class="inline-block animate-float mb-6">
+                <span class="px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest">
+                    <i class="fas fa-check-circle mr-2"></i> <span data-i18n="hero_badge">Hivatalos Elemző Motor v3.0</span>
+                </span>
             </div>
-            <h1 class="text-5xl md:text-7xl font-extrabold mb-8 hero-gradient tracking-tight">Böngésszen tudatosan.</h1>
-            <p class="text-slate-400 text-xl max-w-2xl mx-auto leading-relaxed">
-                Valós idejű technikai elemzés és domain hitelesítés. Vizsgálja meg a weboldalak digitális lábnyomát.
+            
+            <h2 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-slate-400" data-i18n="hero_title">
+                Biztonságos ez a webshop?
+            </h2>
+            <p class="text-lg text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed" data-i18n="hero_sub">
+                Ellenőrizze bármely weboldal legitimitását másodpercek alatt. Elemzünk domaint, titkosítást, cégadatokat és rejtett kockázatokat.
             </p>
-        </div>
 
-        <div class="relative glass p-3 rounded-3xl transition-all duration-500 focus-within:ring-2 focus-within:ring-blue-500/50 shadow-2xl">
-            <div id="scanner" class="scanner-line"></div>
-            <div class="flex flex-col md:flex-row gap-3">
-                <div class="flex-1 flex items-center px-4 gap-4">
-                    <i class="fas fa-globe text-slate-500"></i>
-                    <input type="text" id="urlInput" placeholder="pl: wikipedia.org vagy otpbank.hu" 
-                        class="bg-transparent w-full py-4 text-lg outline-none text-white placeholder-slate-600">
+            <div class="glass p-2 rounded-2xl flex flex-col md:flex-row gap-2 shadow-2xl shadow-blue-900/20 border border-white/10 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                <div class="flex-1 flex items-center px-6 py-4 bg-slate-900/50 rounded-xl border border-transparent focus-within:border-blue-500/50 transition">
+                    <i class="fas fa-link text-slate-500 mr-4"></i>
+                    <input type="text" id="urlInput" placeholder="pl. https://www.pepita.hu" 
+                        class="bg-transparent w-full outline-none text-white placeholder-slate-600 text-lg">
                 </div>
-                <button onclick="runAnalysis()" 
-                    class="bg-blue-600 hover:bg-blue-500 text-white px-12 py-4 rounded-2xl font-bold text-lg transition-all shadow-xl shadow-blue-500/20 active:scale-95">
-                    Mélyelemzés
+                <button onclick="runCheck()" class="bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-xl font-bold text-lg transition shadow-lg shadow-blue-600/20 active:scale-95 whitespace-nowrap">
+                    <span data-i18n="btn_analyze">Elemzés</span> <i class="fas fa-arrow-right ml-2"></i>
                 </button>
             </div>
+            
+            <div class="mt-6 flex justify-center gap-6 text-xs text-slate-500 font-medium uppercase tracking-wide">
+                <span><i class="fas fa-lock text-green-500 mr-1.5"></i> SSL Check</span>
+                <span><i class="fas fa-server text-blue-500 mr-1.5"></i> Whois API</span>
+                <span><i class="fas fa-fingerprint text-purple-500 mr-1.5"></i> Scam Detect</span>
+            </div>
+        </section>
+
+        <div id="loadingState" class="hidden max-w-2xl mx-auto px-6 mb-20">
+            <div class="text-center mb-4">
+                <span class="text-blue-400 font-mono text-sm" id="loadingText">Szerver kapcsolat felépítése...</span>
+            </div>
+            <div class="loading-bar rounded-full"></div>
         </div>
 
-        <div id="results" class="hidden mt-16 space-y-8 animate-in fade-in duration-700">
-            <div class="glass p-12 rounded-[2.5rem] relative overflow-hidden text-center">
-                <div id="scoreValue" class="text-8xl font-black mb-4 tracking-tighter">0%</div>
-                <div id="verdict" class="text-2xl font-bold uppercase tracking-[0.2em] mb-12">Ellenőrzés...</div>
+        <section id="resultsSection" class="hidden max-w-5xl mx-auto px-6 pb-32">
+            <div class="glass rounded-[2rem] border border-white/10 overflow-hidden">
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left" id="checkDetails">
+                <div class="p-10 md:p-14 text-center border-b border-white/5 bg-slate-800/30">
+                    <div id="scoreRing" class="inline-flex items-center justify-center w-32 h-32 rounded-full border-4 border-slate-700 mb-6 relative">
+                        <span id="scoreValue" class="text-5xl font-black text-white">0</span>
+                        <span class="absolute top-0 right-0 -mt-2 -mr-2 bg-slate-800 p-2 rounded-full border border-white/10 text-xs text-slate-400">/100</span>
                     </div>
+                    
+                    <div class="mb-4">
+                        <span id="verdictBadge" class="trust-badge badge-green text-lg py-2 px-6">MEGBÍZHATÓ</span>
+                    </div>
+                    
+                    <p id="humanExplanation" class="text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-light">
+                        </p>
+                </div>
+
+                <div class="p-10 bg-slate-900/20">
+                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-8 text-center" data-i18n="analysis_title">Részletes Elemzési Jegyzőkönyv</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="checkGrid">
+                        </div>
+                </div>
+
+                <div class="p-6 bg-slate-900/50 border-t border-white/5 flex justify-between items-center text-sm text-slate-500">
+                    <span><i class="fas fa-clock mr-2"></i> <span id="timestamp">--</span></span>
+                    <button class="hover:text-white transition flex items-center gap-2">
+                        <i class="fas fa-flag"></i> <span data-i18n="report_btn">Hibás eredmény jelentése</span>
+                    </button>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <section id="how-it-works" class="py-24 border-t border-white/5 bg-slate-900/50">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h3 class="text-3xl font-bold text-white mb-4" data-i18n="hiw_title">Hogyan számoljuk a kockázatot?</h3>
+                    <p class="text-slate-400 max-w-xl mx-auto" data-i18n="hiw_sub">Algoritmusunk 4 fő pillér alapján súlyozza a weboldalakat.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div class="p-6 rounded-2xl bg-slate-800/30 border border-white/5 hover:border-blue-500/30 transition group">
+                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition">
+                            <i class="fas fa-globe text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-white mb-2" data-i18n="feat_1_t">Domain & SSL</h4>
+                        <p class="text-sm text-slate-400 leading-relaxed" data-i18n="feat_1_d">Ellenőrizzük a regisztráció idejét, a titkosítást és a domain végződés (TLD) reputációját.</p>
+                    </div>
+                    
+                    <div class="p-6 rounded-2xl bg-slate-800/30 border border-white/5 hover:border-purple-500/30 transition group">
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 mb-6 group-hover:scale-110 transition">
+                            <i class="fas fa-file-contract text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-white mb-2" data-i18n="feat_2_t">Átláthatóság</h4>
+                        <p class="text-sm text-slate-400 leading-relaxed" data-i18n="feat_2_d">Keressük az ÁSZF, Adatkezelési tájékoztató és Kapcsolat oldalak meglétét.</p>
+                    </div>
+
+                    <div class="p-6 rounded-2xl bg-slate-800/30 border border-white/5 hover:border-red-500/30 transition group">
+                        <div class="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 mb-6 group-hover:scale-110 transition">
+                            <i class="fas fa-spider text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-white mb-2" data-i18n="feat_3_t">Csaló Minták</h4>
+                        <p class="text-sm text-slate-400 leading-relaxed" data-i18n="feat_3_d">Pszichológiai nyomásgyakorlás, irreális akciók és adathalász kulcsszavak szűrése.</p>
+                    </div>
+
+                    <div class="p-6 rounded-2xl bg-slate-800/30 border border-white/5 hover:border-green-500/30 transition group">
+                        <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 mb-6 group-hover:scale-110 transition">
+                            <i class="fas fa-star text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-white mb-2" data-i18n="feat_4_t">Hírnév</h4>
+                        <p class="text-sm text-slate-400 leading-relaxed" data-i18n="feat_4_d">Összevetés globális fehérlistákkal (pl. Google, közismert márkák) és tiltólistákkal.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <div id="how-it-works" class="modal">
-        <div class="glass max-w-2xl w-full p-10 rounded-3xl relative mx-4">
-            <button onclick="closeModal('how-it-works')" class="absolute top-6 right-6 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
-            <h2 class="text-3xl font-bold mb-6 text-blue-400">Technikai Elemzés</h2>
-            <div class="space-y-6 text-slate-300">
-                <div class="flex gap-4">
-                    <i class="fas fa-lock text-blue-500 mt-1"></i>
-                    <p><span class="font-bold text-white">SSL & Titkosítás:</span> Ellenőrizzük a weboldal biztonsági tanúsítványának érvényességét.</p>
-                </div>
-                <div class="flex gap-4">
-                    <i class="fas fa-microchip text-blue-500 mt-1"></i>
-                    <p><span class="font-bold text-white">Heurisztikus Motor:</span> Kiszűrjük a Punycode alapú adathalász kísérleteket és a félrevezető domain-neveket.</p>
-                </div>
-                <div class="flex gap-4">
-                    <i class="fas fa-database text-blue-500 mt-1"></i>
-                    <p><span class="font-bold text-white">Hitelesség:</span> Összevetjük a domain végződést és a nevet a globális hírnév-listánkkal.</p>
-                </div>
+    <footer class="border-t border-white/10 bg-slate-900 py-12 text-sm">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-slate-500">
+                <span class="font-bold text-slate-300">SafeBrowse Pro</span> &copy; 2024. <span data-i18n="footer_rights">Minden jog fenntartva.</span>
             </div>
+            <div class="flex gap-6 text-slate-400">
+                <button onclick="openModal('privacy-modal')" class="hover:text-white" data-i18n="nav_privacy">Adatvédelem</button>
+                <button onclick="openModal('disclaimer-modal')" class="hover:text-white" data-i18n="nav_terms">Jogi Nyilatkozat</button>
+            </div>
+        </div>
+        <div class="max-w-6xl mx-auto px-6 mt-8 text-center">
+            <p class="text-xs text-slate-600 max-w-2xl mx-auto" data-i18n="footer_disclaimer">
+                Ez az oldal nem nyújt jogi tanácsadást. Az eredmények egy automatizált kockázatbecslésen alapulnak. A weboldal használatából eredő károkért felelősséget nem vállalunk.
+            </p>
+        </div>
+    </footer>
+
+    <div id="about-modal" class="modal">
+        <div class="glass max-w-xl w-full mx-4 rounded-2xl p-8 relative">
+            <button onclick="closeModal('about-modal')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
+            <h3 class="text-2xl font-bold text-white mb-4" data-i18n="about_t">Rólunk</h3>
+            <p class="text-slate-300 leading-relaxed mb-4" data-i18n="about_p1">
+                A SafeBrowse Pro egy független, közösségi célú projekt. Küldetésünk, hogy átláthatóbbá és biztonságosabbá tegyük az online vásárlást Magyarországon.
+            </p>
+            <p class="text-slate-300 leading-relaxed" data-i18n="about_p2">
+                Nem állunk kapcsolatban egyetlen webshoppal sem, így elemzéseink 100%-ban technikai adatokon alapulnak, részrehajlás nélkül.
+            </p>
         </div>
     </div>
 
-    <div id="privacy" class="modal">
-        <div class="glass max-w-2xl w-full p-10 rounded-3xl relative mx-4">
-            <button onclick="closeModal('privacy')" class="absolute top-6 right-6 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
-            <h2 class="text-3xl font-bold mb-6 text-blue-400">Adatvédelem</h2>
-            <p class="text-slate-300 leading-relaxed">
-                A SafeBrowse Pro a magánélet védelmére épült. Nem tároljuk a beírt URL-eket, nem használunk követő kódokat, és az elemzések eredményeit azonnal töröljük a memóriából.
+    <div id="privacy-modal" class="modal">
+        <div class="glass max-w-xl w-full mx-4 rounded-2xl p-8 relative">
+            <button onclick="closeModal('privacy-modal')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
+            <h3 class="text-2xl font-bold text-white mb-4" data-i18n="priv_t">Adatvédelmi Tájékoztató</h3>
+            <ul class="space-y-3 text-slate-300">
+                <li class="flex gap-3"><i class="fas fa-check text-green-500 mt-1"></i> <span data-i18n="priv_l1">Nem tároljuk a beírt URL címeket adatbázisban.</span></li>
+                <li class="flex gap-3"><i class="fas fa-check text-green-500 mt-1"></i> <span data-i18n="priv_l2">Nem használunk követő sütiket (tracking cookies).</span></li>
+                <li class="flex gap-3"><i class="fas fa-check text-green-500 mt-1"></i> <span data-i18n="priv_l3">Az elemzési eredmények a munkamenet végén törlődnek.</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="disclaimer-modal" class="modal">
+        <div class="glass max-w-xl w-full mx-4 rounded-2xl p-8 relative border-l-4 border-yellow-500">
+            <button onclick="closeModal('disclaimer-modal')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
+            <h3 class="text-2xl font-bold text-white mb-4" data-i18n="disc_t">Felelősségkizárás</h3>
+            <p class="text-slate-300 leading-relaxed text-sm" data-i18n="disc_p">
+                A weboldalon megjelenő Trust Score és biztonsági elemzés kizárólag tájékoztató jellegű. Az algoritmus heurisztikus módszereket használ, így előfordulhatnak téves pozitív vagy negatív találatok (False Positive/Negative).<br><br>
+                A SafeBrowse Pro üzemeltetője nem vállal felelősséget a harmadik fél által üzemeltetett weboldalak tartalmáért, sem az azok használatából eredő anyagi vagy egyéb károkért. Vásárlás előtt mindig tájékozódjon több forrásból!
             </p>
         </div>
     </div>
 
     <script>
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        // --- Translations ---
+        const i18n = {
+            hu: {
+                hero_title: "Biztonságos ez a webshop?",
+                hero_sub: "Ellenőrizze bármely weboldal legitimitását másodpercek alatt. Elemzünk domaint, titkosítást, cégadatokat és rejtett kockázatokat.",
+                btn_analyze: "Elemzés",
+                hero_badge: "Hivatalos Elemző Motor v3.0",
+                nav_how: "Hogyan működik?",
+                nav_about: "Rólunk",
+                nav_privacy: "Adatvédelem",
+                nav_terms: "Jogi Nyilatkozat",
+                analysis_title: "Részletes Elemzési Jegyzőkönyv",
+                footer_rights: "Minden jog fenntartva.",
+                footer_disclaimer: "Ez az oldal nem nyújt jogi tanácsadást. Az eredmények egy automatizált kockázatbecslésen alapulnak.",
+                about_t: "Rólunk",
+                about_p1: "A SafeBrowse Pro egy független, közösségi célú projekt. Küldetésünk, hogy átláthatóbbá és biztonságosabbá tegyük az online vásárlást Magyarországon.",
+                about_p2: "Nem állunk kapcsolatban egyetlen webshoppal sem, így elemzéseink 100%-ban technikai adatokon alapulnak.",
+                priv_t: "Adatvédelmi Tájékoztató",
+                priv_l1: "Nem tároljuk a beírt URL címeket adatbázisban.",
+                priv_l2: "Nem használunk követő sütiket (tracking cookies).",
+                priv_l3: "Az elemzési eredmények a munkamenet végén törlődnek.",
+                disc_t: "Felelősségkizárás",
+                disc_p: "A weboldalon megjelenő Trust Score és biztonsági elemzés kizárólag tájékoztató jellegű. Nem vállalunk felelősséget az esetleges téves eredményekért.",
+                hiw_title: "Hogyan számoljuk a kockázatot?",
+                hiw_sub: "Algoritmusunk 4 fő pillér alapján súlyozza a weboldalakat.",
+                report_btn: "Hibás eredmény jelentése",
+                feat_1_t: "Domain & SSL", feat_1_d: "Ellenőrizzük a regisztráció idejét, a titkosítást és a domain reputációját.",
+                feat_2_t: "Átláthatóság", feat_2_d: "Keressük az ÁSZF, Adatkezelési tájékoztató és Kapcsolat oldalak meglétét.",
+                feat_3_t: "Csaló Minták", feat_3_d: "Pszichológiai nyomásgyakorlás, irreális akciók és adathalász kulcsszavak szűrése.",
+                feat_4_t: "Hírnév", feat_4_d: "Összevetés globális fehérlistákkal (pl. Google, közismert márkák) és tiltólistákkal."
+            },
+            en: {
+                hero_title: "Is this website safe?",
+                hero_sub: "Check the legitimacy of any website in seconds. We analyze domains, encryption, company data, and hidden risks.",
+                btn_analyze: "Analyze",
+                hero_badge: "Official Analysis Engine v3.0",
+                nav_how: "How it works?",
+                nav_about: "About Us",
+                nav_privacy: "Privacy",
+                nav_terms: "Disclaimer",
+                analysis_title: "Detailed Analysis Report",
+                footer_rights: "All rights reserved.",
+                footer_disclaimer: "This site does not provide legal advice. Results are based on automated risk assessment.",
+                about_t: "About Us",
+                about_p1: "SafeBrowse Pro is an independent, community-driven project. Our mission is to make online shopping safer and more transparent.",
+                about_p2: "We are not affiliated with any webshops, so our analyses are 100% based on technical data without bias.",
+                priv_t: "Privacy Policy",
+                priv_l1: "We do not store submitted URLs in a database.",
+                priv_l2: "We do not use tracking cookies.",
+                priv_l3: "Analysis results are cleared at the end of the session.",
+                disc_t: "Disclaimer",
+                disc_p: "The Trust Score and security analysis displayed on this website are for informational purposes only. We accept no liability for incorrect results.",
+                hiw_title: "How we calculate risk?",
+                hiw_sub: "Our algorithm weights websites based on 4 main pillars.",
+                report_btn: "Report incorrect result",
+                feat_1_t: "Domain & SSL", feat_1_d: "We check registration age, encryption, and domain reputation.",
+                feat_2_t: "Transparency", feat_2_d: "We look for Terms of Service, Privacy Policy, and Contact pages.",
+                feat_3_t: "Scam Patterns", feat_3_d: "Filtering psychological pressure, unrealistic discounts, and phishing keywords.",
+                feat_4_t: "Reputation", feat_4_d: "Comparison with global whitelists (e.g., Google, major brands) and blacklists."
+            }
+        };
 
-        async function runAnalysis() {
-            const url = document.getElementById('urlInput').value;
-            if(!url) return;
+        let currentLang = 'hu';
 
-            // Animációk
-            document.getElementById('scanner').style.display = 'block';
-            const resDiv = document.getElementById('results');
-            resDiv.classList.add('hidden');
+        // --- Core Functions ---
+        
+        // Parallax Effect
+        document.addEventListener('mousemove', (e) => {
+            const bg = document.getElementById('parallaxBg');
+            const x = (e.clientX / window.innerWidth) * 20;
+            const y = (e.clientY / window.innerHeight) * 20;
+            bg.style.transform = `translate(-${x}px, -${y}px)`;
+        });
+
+        // Modal Logic
+        function openModal(id) { 
+            const el = document.getElementById(id);
+            el.style.display = 'flex';
+            setTimeout(() => el.classList.add('active'), 10);
+        }
+        function closeModal(id) { 
+            const el = document.getElementById(id);
+            el.classList.remove('active');
+            setTimeout(() => el.style.display = 'none', 300);
+        }
+        
+        // Close modal on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if(e.target === modal) closeModal(modal.id);
+            });
+        });
+
+        // Language Toggle
+        function toggleLang() {
+            currentLang = currentLang === 'hu' ? 'en' : 'hu';
+            document.getElementById('currentLang').innerText = currentLang.toUpperCase();
+            
+            // Update all text elements
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(i18n[currentLang][key]) {
+                    el.innerText = i18n[currentLang][key];
+                }
+            });
+        }
+
+        // Analysis Logic
+        async function runCheck() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value;
+            if(!url) return urlInput.focus();
+
+            // UI State: Loading
+            const loadingState = document.getElementById('loadingState');
+            const resultsSection = document.getElementById('resultsSection');
+            const loadingText = document.getElementById('loadingText');
+            
+            loadingState.classList.remove('hidden');
+            resultsSection.classList.add('hidden');
+            
+            // Simulated Progress Steps
+            const steps = [
+                currentLang === 'hu' ? "SSL tanúsítvány ellenőrzése..." : "Checking SSL certificate...",
+                currentLang === 'hu' ? "Domain DNS feloldása..." : "Resolving Domain DNS...",
+                currentLang === 'hu' ? "Csaló minták keresése..." : "Scanning for scam patterns...",
+                currentLang === 'hu' ? "Eredmények összesítése..." : "Finalizing results..."
+            ];
+            
+            let s = 0;
+            const stepInt = setInterval(() => {
+                if(s < steps.length) loadingText.innerText = steps[s++];
+            }, 400);
 
             try {
+                // API Call
                 const response = await fetch(`/.netlify/functions/check-url?url=${encodeURIComponent(url)}`);
                 const data = await response.json();
 
+                clearInterval(stepInt);
+                
+                // Add tiny delay for UI smoothness
                 setTimeout(() => {
-                    document.getElementById('scanner').style.display = 'none';
-                    resDiv.classList.remove('hidden');
-                    updateUI(data);
-                }, 1200);
+                    loadingState.classList.add('hidden');
+                    resultsSection.classList.remove('hidden');
+                    renderResults(data);
+                    
+                    // Scroll to results
+                    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 800);
+
             } catch (err) {
-                console.error("Analízis hiba:", err);
-                document.getElementById('scanner').style.display = 'none';
+                clearInterval(stepInt);
+                loadingText.innerText = "Error connecting to server.";
+                console.error(err);
             }
         }
 
-        function updateUI(data) {
+        function renderResults(data) {
             const scoreEl = document.getElementById('scoreValue');
-            const verdictEl = document.getElementById('verdict');
-            const detailsEl = document.getElementById('checkDetails');
+            const ringEl = document.getElementById('scoreRing');
+            const verdictEl = document.getElementById('verdictBadge');
+            const explanationEl = document.getElementById('humanExplanation');
+            const gridEl = document.getElementById('checkGrid');
 
-            scoreEl.innerText = data.score + "%";
-            verdictEl.innerText = data.verdict;
+            // 1. Score
+            scoreEl.innerText = data.score;
+            
+            // 2. Verdict & Colors
+            let colorClass = 'text-red-500 border-red-500';
+            let badgeClass = 'badge-red';
+            let verdictText = currentLang === 'hu' ? "VESZÉLYES" : "HIGH RISK";
 
-            // Színkódolás
-            let color = "#22c55e"; // Megbízható (Zöld)
-            if (data.score < 40) color = "#ef4444"; // Veszélyes (Piros)
-            else if (data.score < 80) color = "#f59e0b"; // Kockázatos (Sárga)
+            if (data.score > 80) {
+                colorClass = 'text-green-500 border-green-500';
+                badgeClass = 'badge-green';
+                verdictText = currentLang === 'hu' ? "MEGBÍZHATÓ" : "LEGITIMATE";
+            } else if (data.score > 40) {
+                colorClass = 'text-yellow-500 border-yellow-500';
+                badgeClass = 'badge-yellow';
+                verdictText = currentLang === 'hu' ? "KÖRÜLTEKINTÉST IGÉNYEL" : "CAUTION";
+            }
 
-            scoreEl.style.color = color;
-            verdictEl.style.color = color;
+            ringEl.className = `inline-flex items-center justify-center w-32 h-32 rounded-full border-4 mb-6 relative ${colorClass}`;
+            verdictEl.className = `trust-badge text-lg py-2 px-6 ${badgeClass}`;
+            verdictEl.innerText = verdictText;
+            explanationEl.innerText = data.explanation;
 
-            // Kártyák generálása
-            detailsEl.innerHTML = data.checks.map(c => `
-                <div class="glass p-6 rounded-2xl flex items-start gap-4 border-l-4 transition-all hover:bg-white/5" 
-                     style="border-color: ${c.status === 'ok' ? '#22c55e' : (c.status === 'warn' ? '#f59e0b' : '#ef4444')}">
-                    <div class="text-xl mt-1">
-                        <i class="fas ${c.status === 'ok' ? 'fa-check-double text-green-500' : (c.status === 'warn' ? 'fa-triangle-exclamation text-yellow-500' : 'fa-circle-xmark text-red-500')}"></i>
-                    </div>
+            // 3. Grid Cards
+            gridEl.innerHTML = data.checks.map(c => {
+                let icon = 'fa-info-circle';
+                let iconColor = 'text-slate-500';
+                let borderColor = 'border-slate-700';
+
+                if(c.status === 'ok') { 
+                    icon = 'fa-check-circle'; iconColor = 'text-green-500'; borderColor = 'border-green-500/50';
+                } else if(c.status === 'warn') { 
+                    icon = 'fa-exclamation-triangle'; iconColor = 'text-yellow-500'; borderColor = 'border-yellow-500/50';
+                } else { 
+                    icon = 'fa-times-circle'; iconColor = 'text-red-500'; borderColor = 'border-red-500/50';
+                }
+
+                return `
+                <div class="bg-slate-800/50 p-5 rounded-xl border-l-4 ${borderColor} flex gap-4 items-start">
+                    <div class="mt-1 ${iconColor} text-lg"><i class="fas ${icon}"></i></div>
                     <div>
-                        <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">${c.label}</h4>
-                        <p class="text-sm text-slate-200 font-medium leading-tight">${c.msg}</p>
+                        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">${c.cat || 'General'}</div>
+                        <p class="text-sm text-slate-200 leading-snug">${c.msg}</p>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
+            
+            // Timestamp
+            document.getElementById('timestamp').innerText = new Date().toLocaleString();
         }
     </script>
 </body>
