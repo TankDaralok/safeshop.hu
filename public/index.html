@@ -32,6 +32,7 @@
             background: radial-gradient(circle at center, #1e293b 0%, #0f172a 70%);
             z-index: -2;
             transition: transform 0.1s ease-out;
+            pointer-events: none;
         }
         .grid-overlay {
             position: fixed; inset: 0;
@@ -40,6 +41,7 @@
             background-size: 40px 40px;
             z-index: -1;
             mask-image: radial-gradient(circle at center, black, transparent 80%);
+            pointer-events: none;
         }
 
         /* --- Glassmorphism --- */
@@ -119,13 +121,14 @@
             </p>
 
             <div class="glass p-2 rounded-2xl flex flex-col md:flex-row gap-2 shadow-2xl shadow-blue-900/20 border border-white/10 relative overflow-hidden group">
-                <div class="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                <div class="flex-1 flex items-center px-6 py-4 bg-slate-900/50 rounded-xl border border-transparent focus-within:border-blue-500/50 transition">
+                <div class="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition duration-500 pointer-events-none"></div>
+                
+                <div class="flex-1 flex items-center px-6 py-4 bg-slate-900/50 rounded-xl border border-transparent focus-within:border-blue-500/50 transition relative z-10">
                     <i class="fas fa-link text-slate-500 mr-4"></i>
                     <input type="text" id="urlInput" placeholder="pl. https://www.pepita.hu" 
-                        class="bg-transparent w-full outline-none text-white placeholder-slate-600 text-lg">
+                        class="bg-transparent w-full outline-none text-white placeholder-slate-500 text-lg relative z-20">
                 </div>
-                <button onclick="runCheck()" class="bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-xl font-bold text-lg transition shadow-lg shadow-blue-600/20 active:scale-95 whitespace-nowrap">
+                <button onclick="runCheck()" class="bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-xl font-bold text-lg transition shadow-lg shadow-blue-600/20 active:scale-95 whitespace-nowrap relative z-10">
                     <span data-i18n="btn_analyze">Elemzés</span> <i class="fas fa-arrow-right ml-2"></i>
                 </button>
             </div>
@@ -291,7 +294,7 @@
                 footer_disclaimer: "Ez az oldal nem nyújt jogi tanácsadást. Az eredmények egy automatizált kockázatbecslésen alapulnak.",
                 about_t: "Rólunk",
                 about_p1: "A SafeBrowse Pro egy független, közösségi célú projekt. Küldetésünk, hogy átláthatóbbá és biztonságosabbá tegyük az online vásárlást Magyarországon.",
-                about_p2: "Nem állunk kapcsolatban egyetlen webshoppal sem, így elemzéseink 100%-ban technikai adatokon alapulnak.",
+                about_p2: "Nem állunk kapcsolatban egyetlen webshoppal sem, így elemzéseink 100%-ban technikai adatokon alapulnak, részrehajlás nélkül.",
                 priv_t: "Adatvédelmi Tájékoztató",
                 priv_l1: "Nem tároljuk a beírt URL címeket adatbázisban.",
                 priv_l2: "Nem használunk követő sütiket (tracking cookies).",
