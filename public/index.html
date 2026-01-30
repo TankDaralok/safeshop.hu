@@ -3,121 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeShop Pro | Advanced Security Analysis</title>
+    <title>SafeShop Pro | Prémium Webshop Ellenőrző</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background: #0f172a; overflow-x: hidden; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         
-        /* Parallax Background */
-        .parallax {
-            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+        body { 
+            background: #020617; 
+            color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        /* Finomított Parallax & Glow */
+        .bg-glow {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% -20%, #1e1b4b 0%, #020617 80%);
+            z-index: -1;
         }
 
         .glass {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        .hero-text {
-            background: linear-gradient(to right, #60a5fa, #a78bfa);
+        .hero-gradient {
+            background: linear-gradient(135deg, #60a5fa 0%, #c084fc 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* Subtle float animation */
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
+        /* Szkenner animáció */
+        .scanner-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, #60a5fa, transparent);
+            animation: scan 2s linear infinite;
+            display: none;
         }
-        .float-anim { animation: float 4s ease-in-out infinite; }
+
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .modal {
+            display: none; position: fixed; inset: 0; z-index: 50;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
+        }
     </style>
 </head>
-<body class="text-slate-200">
+<body>
 
-    <div class="parallax"></div>
+    <div class="bg-glow"></div>
 
-    <nav class="p-6 flex justify-between items-center max-w-6xl mx-auto">
-        <div class="flex items-center gap-3 font-bold text-2xl tracking-tighter">
-            <div class="bg-blue-600 p-2 rounded-lg"><i class="fas fa-shield-virus text-white"></i></div>
-            <span>SAFESHOP<span class="text-blue-500">PRO</span></span>
-        </div>
-        <div class="hidden md:flex gap-8 text-sm font-medium text-slate-400">
-            <a href="#" class="hover:text-white transition">Hogyan működik?</a>
-            <a href="#" class="hover:text-white transition">Adatvédelem</a>
-            <a href="#" class="hover:text-white transition">Kapcsolat</a>
+    <nav class="sticky top-0 z-40 p-6 glass border-b border-white/5">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3 font-extrabold text-2xl tracking-tight">
+                <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20">
+                    <i class="fas fa-shield-halved text-white"></i>
+                </div>
+                <span>SAFESHOP<span class="text-blue-500">PRO</span></span>
+            </div>
+            <div class="hidden md:flex gap-10 text-sm font-semibold text-slate-400">
+                <a href="javascript:void(0)" onclick="openModal('how-it-works')" class="hover:text-blue-400 transition">Hogyan működik?</a>
+                <a href="javascript:void(0)" onclick="openModal('privacy')" class="hover:text-blue-400 transition">Adatvédelem</a>
+            </div>
         </div>
     </nav>
 
-    <main class="max-w-4xl mx-auto px-6 py-20 text-center">
-        <div class="float-anim inline-block bg-blue-500/10 text-blue-400 px-4 py-1 rounded-full text-xs font-bold border border-blue-500/20 mb-6">
-            ✨ AI-POWERED ANALYSIS v3.0
-        </div>
-        
-        <h1 class="text-5xl md:text-7xl font-black mb-6 hero-text">Vásároljon biztonságban.</h1>
-        <p class="text-slate-400 text-lg mb-12 max-w-2xl mx-auto">
-            Elemezzük a magyar webáruházakat domain kor, SSL tanúsítvány és gyanús minták alapján.
-        </p>
-
-        <div class="glass p-2 rounded-2xl flex flex-col md:flex-row gap-2 shadow-2xl transition-all hover:border-blue-500/50">
-            <input type="text" id="urlInput" placeholder="https://pelda-bolt.hu" 
-                class="bg-transparent w-full p-4 outline-none text-white placeholder-slate-500">
-            <button onclick="checkSite()" 
-                class="bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-blue-500/20">
-                Elemzés indítása
-            </button>
+    <main class="max-w-4xl mx-auto px-6 pt-24 pb-32">
+        <div class="text-center mb-16">
+            <span class="px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold tracking-widest uppercase mb-6 inline-block">
+                Regionális Biztonsági Analitika (HU)
+            </span>
+            <h1 class="text-6xl md:text-7xl font-extrabold mb-8 hero-gradient tracking-tight">Vásároljon félelem nélkül.</h1>
+            <p class="text-slate-400 text-xl max-w-2xl mx-auto leading-relaxed">
+                A SafeShop Pro valós időben elemzi a webáruházak digitális lábnyomát, hogy kiszűrje a csalókat.
+            </p>
         </div>
 
-        <div id="results" class="hidden mt-12 space-y-6">
-            <div class="glass p-10 rounded-3xl border-t-2 border-blue-500">
-                <div id="scoreCircle" class="text-7xl font-black mb-2 text-blue-500">0%</div>
-                <div id="verdict" class="text-2xl font-bold uppercase tracking-widest mb-6">Analizálás...</div>
-                
-                <div class="w-full bg-slate-800 h-2 rounded-full mb-10 overflow-hidden">
-                    <div id="scoreBar" class="h-full bg-blue-500 transition-all duration-1000 w-0"></div>
+        <div class="relative glass p-3 rounded-3xl group transition-all duration-500 focus-within:ring-2 focus-within:ring-blue-500/50">
+            <div id="scanner" class="scanner-line"></div>
+            <div class="flex flex-col md:flex-row gap-3">
+                <div class="flex-1 flex items-center px-4 gap-4">
+                    <i class="fas fa-link text-slate-500"></i>
+                    <input type="text" id="urlInput" placeholder="https://pelda-webshop.hu" 
+                        class="bg-transparent w-full py-4 text-lg outline-none text-white placeholder-slate-600">
                 </div>
+                <button onclick="runAnalysis()" 
+                    class="bg-blue-600 hover:bg-blue-500 text-white px-12 py-4 rounded-2xl font-bold text-lg transition-all shadow-xl shadow-blue-500/20 active:scale-95">
+                    Elemzés
+                </button>
+            </div>
+        </div>
 
-                <div id="details" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+        <div id="results" class="hidden mt-16 space-y-8 animate-in fade-in duration-700">
+            <div class="glass p-12 rounded-[2.5rem] relative overflow-hidden">
+                <div id="scoreValue" class="text-8xl font-black mb-4 text-blue-500 tracking-tighter">0%</div>
+                <div id="verdict" class="text-2xl font-bold uppercase tracking-[0.2em] mb-8">Ellenőrzés folyamatban...</div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="checkDetails">
                     </div>
             </div>
         </div>
     </main>
 
+    <div id="how-it-works" class="modal flex items-center justify-center p-6">
+        <div class="glass max-w-2xl w-full p-10 rounded-3xl relative">
+            <button onclick="closeModal('how-it-works')" class="absolute top-6 right-6 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
+            <h2 class="text-3xl font-bold mb-6 text-blue-400">Hogyan működik az elemzés?</h2>
+            <div class="space-y-6 text-slate-300">
+                <div class="flex gap-4">
+                    <i class="fas fa-server text-blue-500 mt-1"></i>
+                    <p><span class="font-bold text-white">Technikai ellenőrzés:</span> Vizsgáljuk az SSL tanúsítvány érvényességét és a biztonságos protokollokat.</p>
+                </div>
+                <div class="flex gap-4">
+                    <i class="fas fa-fingerprint text-blue-500 mt-1"></i>
+                    <p><span class="font-bold text-white">Digitális ujjlenyomat:</span> Összevetjük a domaint ismert magyar csaló oldalak mintáival (pl. gyanús TLD-k, mint .xyz vagy .top).</p>
+                </div>
+                <div class="flex gap-4">
+                    <i class="fas fa-language text-blue-500 mt-1"></i>
+                    <p><span class="font-bold text-white">Nyelvi elemzés:</span> Keressük a gépi fordításra utaló jeleket a magyar szövegekben.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="privacy" class="modal flex items-center justify-center p-6">
+        <div class="glass max-w-2xl w-full p-10 rounded-3xl relative">
+            <button onclick="closeModal('privacy')" class="absolute top-6 right-6 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
+            <h2 class="text-3xl font-bold mb-6 text-blue-400">Adatvédelmi Nyilatkozat</h2>
+            <p class="text-slate-300 leading-relaxed">
+                A SafeShop Pro fejlesztésekor a **privacy-by-design** elvet követtük. <br><br>
+                1. **Nem tároljuk a URL-eket:** Az ellenőrzött weboldalakat nem mentjük adatbázisba.<br>
+                2. **Nincs követés:** Nem használunk marketing sütiket (cookies).<br>
+                3. **GDPR megfelelés:** A szerveroldali kódunk anonimizált lekérdezéseket végez.<br><br>
+                Az Ön biztonsága az első, nem az adatai.
+            </p>
+        </div>
+    </div>
+
     <script>
-        async function checkSite() {
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        async function runAnalysis() {
             const url = document.getElementById('urlInput').value;
             if(!url) return;
 
+            // Animációk indítása
+            document.getElementById('scanner').style.display = 'block';
             const resDiv = document.getElementById('results');
-            resDiv.classList.remove('hidden');
-            resDiv.scrollIntoView({ behavior: 'smooth' });
+            resDiv.classList.add('hidden');
 
-            // Call Backend
             const response = await fetch(`/.netlify/functions/check-url?url=${encodeURIComponent(url)}`);
             const data = await response.json();
 
-            // Update UI
-            document.getElementById('scoreCircle').innerText = data.score + "%";
-            document.getElementById('scoreBar').style.width = data.score + "%";
-            
-            const verdict = data.score > 75 ? "BIZTONSÁGOS" : (data.score > 40 ? "VIGYÁZAT" : "VESZÉLYES");
-            const color = data.score > 75 ? "#3b82f6" : (data.score > 40 ? "#f59e0b" : "#ef4444");
-            
-            document.getElementById('verdict').innerText = verdict;
-            document.getElementById('verdict').style.color = color;
-            document.getElementById('scoreCircle').style.color = color;
-            document.getElementById('scoreBar').style.backgroundColor = color;
+            // Animáció vége
+            setTimeout(() => {
+                document.getElementById('scanner').style.display = 'none';
+                resDiv.classList.remove('hidden');
+                updateUI(data);
+            }, 1200);
+        }
 
-            const details = document.getElementById('details');
-            details.innerHTML = data.checks.map(c => `
-                <div class="glass p-4 rounded-xl border-l-4 border-blue-500 flex gap-4 items-center">
-                    <i class="fas fa-check-circle text-blue-500"></i>
+        function updateUI(data) {
+            const scoreEl = document.getElementById('scoreValue');
+            const verdictEl = document.getElementById('verdict');
+            const detailsEl = document.getElementById('checkDetails');
+
+            scoreEl.innerText = data.score + "%";
+            
+            let color = "#3b82f6";
+            let text = "BIZTONSÁGOS";
+
+            if(data.score < 40) { color = "#ef4444"; text = "VESZÉLYES"; }
+            else if(data.score < 75) { color = "#f59e0b"; text = "GYANÚS"; }
+
+            scoreEl.style.color = color;
+            verdictEl.innerText = text;
+            verdictEl.style.color = color;
+
+            detailsEl.innerHTML = data.checks.map(c => `
+                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4" style="border-color: ${color}">
+                    <div class="text-2xl"><i class="fas fa-circle-check" style="color: ${color}"></i></div>
                     <div>
-                        <p class="text-xs text-slate-500 uppercase font-bold">Biztonsági pont</p>
-                        <p class="text-sm font-medium">${c.msg}</p>
+                        <h4 class="text-xs font-bold text-slate-500 uppercase">${c.label}</h4>
+                        <p class="text-sm text-slate-200">${c.msg}</p>
                     </div>
                 </div>
             `).join('');
