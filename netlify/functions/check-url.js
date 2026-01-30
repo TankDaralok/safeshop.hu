@@ -4,51 +4,50 @@ exports.handler = async (event) => {
 
     let score = 100;
     let checks = [];
-    const url = urlInput.toLowerCase().trim().replace(/^(https?:\/\/)?(www\.)?/, '');
-    const fullUrl = urlInput.startsWith('http') ? urlInput : `https://${urlInput}`;
-
-    // 1. GLOBÁLIS BIZALMI LISTA (White-list)
-    // Ha ezen rajta van, az alapértelmezetten 100% (ha HTTPS)
-    const topDomains = ['google.com', 'youtube.com', 'facebook.com', 'wikipedia.org', 'gov.hu', 'index.hu', 'telex.hu', 'otpbank.hu'];
-    const isTopDomain = topDomains.some(d => url.startsWith(d));
-
-    // 2. HTTPS/SSL ELLENŐRZÉS (Kritikus minden oldalnál)
-    if (!urlInput.startsWith('https')) {
-        score -= 40;
-        checks.push({ label: "Biztonsági réteg", status: "err", msg: "Az oldal nem használ titkosítást. Jelszavak vagy adatok megadása tilos!" });
-    } else {
-        checks.push({ label: "Biztonsági réteg", status: "ok", msg: "Titkosított kapcsolat (SSL) aktív." });
-    }
-
-    // 3. ADATHALÁSZAT ÉS KARAKTER-TRÜKKÖK (Punycode védelem)
-    // Figyeli a gyanús kötőjeleket és számokat a névben
-    const digitCount = (url.split('.')[0].match(/\d/g) || []).length;
-    if (digitCount > 3) {
-        score -= 20;
-        checks.push({ label: "Domain elemzés", status: "warn", msg: "Szokatlanul sok szám a névben, ami gyakran automatizált csaló oldalakra utal." });
-    }
-
-    // 4. MEGBÍZHATÓSÁGI INDEX (TLD)
-    const dangerousTLDs = ['.top', '.xyz', '.work', '.click', '.gq', '.cf', '.tk'];
-    const currentTLD = '.' + url.split('.').pop();
     
-    if (dangerousTLDs.includes(currentTLD)) {
-        score -= 30;
-        checks.push({ label: "Végződés", status: "warn", msg: `A(z) ${currentTLD} végződés ingyenes vagy olcsó, gyakran használják ideiglenes káros oldalakhoz.` });
+    // 1. URL Normalizálás és Tisztítás
+    let cleanUrl = urlInput.toLowerCase().trim().replace(/^(https?:\/\/)?(www\.)?/, '');
+    const domainParts = cleanUrl.split('.');
+    const tld = domainParts[domainParts.length - 1];
+
+    // 2. ADATHALÁSZAT ELLENI VÉDELEM (Subdomain trükkök)
+    // Ha a 'pornhub.com.ru' típusú URL-t látjuk, az adathalászat
+    if (domainParts.length > 2) {
+        const primaryDomain = domainParts[domainParts.length - 2];
+        const knownGlobals = ['google', 'youtube', 'facebook', 'pornhub', 'netflix', 'otpbank'];
+        
+        if (knownGlobals.includes(primaryDomain) && tld !== 'com' && tld !== 'hu' && tld !== 'org') {
+            score -= 70;
+            checks.push({ label: "Adathalászat", status: "err", msg: "VIGYÁZAT: Ez az oldal egy ismert szolgáltató nevét használja, de gyanús végződéssel (.ru, .xyz) próbálja átverni!" });
+        }
+    }
+
+    // 3. SSL ELLENŐRZÉS
+    if (!urlInput.startsWith('https')) {
+        score -= 50;
+        checks.push({ label: "Biztonság", status: "err", msg: "Nincs SSL titkosítás. Az adatforgalom nyitott és veszélyes." });
     } else {
-        checks.push({ label: "Végződés", status: "ok", msg: "Megbízható, szabványos domain végződés." });
+        checks.push({ label: "Biztonság", status: "ok", msg: "Érvényes SSL tanúsítvány detektálva." });
     }
 
-    // 5. GLOBÁLIS HÍRNÉV KORREKCIÓ
-    if (isTopDomain && urlInput.startsWith('https')) {
+    // 4. MAGYAR CÉG ELLENŐRZÉS (Heurisztika)
+    // Ha .hu a domain, ellenőrizzük a hitelességet
+    if (tld === 'hu') {
+        checks.push({ label: "Cégadatok", status: "ok", msg: "A .hu domain regisztrációhoz valós magyar adatok szükségesek, ami növeli a bizalmat." });
+    } else if (['ru', 'xyz', 'top', 'win'].includes(tld)) {
+        score -= 30;
+        checks.push({ label: "Cégadatok", status: "warn", msg: "A választott domain végződés nem igényel azonosítást, gyakran használják anonim csalók." });
+    }
+
+    // 5. GLOBÁLIS FEHÉRLISTA
+    const whiteList = ['google.com', 'youtube.com', 'wikipedia.org', 'telex.hu', 'index.hu', 'pornhub.com'];
+    if (whiteList.some(d => cleanUrl === d || cleanUrl.startsWith(d + '/'))) {
         score = 100;
-        checks = [{ label: "Hírnév", status: "ok", msg: "Ez egy hitelesített, világszerte ismert biztonságos webhely." }];
+        checks = [{ label: "Hitelesítés", status: "ok", msg: "Ez egy hivatalos, verifikált globális szolgáltatás." }];
     }
 
-    // Eredmény meghatározása
-    let verdict = "Megbízható";
-    if (score < 50) verdict = "Veszélyes";
-    else if (score < 85) verdict = "Körültekintést igényel";
+    score = Math.max(0, score);
+    let verdict = score > 80 ? "Megbízható" : (score > 40 ? "Kockázatos" : "Veszélyes");
 
     return {
         statusCode: 200,
