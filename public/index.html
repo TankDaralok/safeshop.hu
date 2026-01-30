@@ -1,33 +1,126 @@
 <!DOCTYPE html>
-<html>
+<html lang="hu-HU">
 <head>
-    <title>SafeShop | Scam Checker</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeShop Pro | Advanced Security Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 p-10">
-    <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-        <h1 class="text-2xl font-bold mb-4 text-blue-600">🛡️ SafeShop HU</h1>
-        <input type="text" id="urlInput" placeholder="Enter shop URL..." class="w-full border p-3 rounded mb-4">
-        <button onclick="checkSite()" class="bg-blue-600 text-white px-6 py-2 rounded font-bold w-full">Ellenőrzés</button>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: #0f172a; overflow-x: hidden; }
         
-        <div id="results" class="hidden mt-6 p-4 rounded bg-gray-50 border">
-            <div id="score" class="text-4xl font-bold mb-2 text-center">0</div>
-            <div id="msg" class="text-gray-600 italic text-center"></div>
+        /* Parallax Background */
+        .parallax {
+            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hero-text {
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Subtle float animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .float-anim { animation: float 4s ease-in-out infinite; }
+    </style>
+</head>
+<body class="text-slate-200">
+
+    <div class="parallax"></div>
+
+    <nav class="p-6 flex justify-between items-center max-w-6xl mx-auto">
+        <div class="flex items-center gap-3 font-bold text-2xl tracking-tighter">
+            <div class="bg-blue-600 p-2 rounded-lg"><i class="fas fa-shield-virus text-white"></i></div>
+            <span>SAFESHOP<span class="text-blue-500">PRO</span></span>
         </div>
-    </div>
+        <div class="hidden md:flex gap-8 text-sm font-medium text-slate-400">
+            <a href="#" class="hover:text-white transition">Hogyan működik?</a>
+            <a href="#" class="hover:text-white transition">Adatvédelem</a>
+            <a href="#" class="hover:text-white transition">Kapcsolat</a>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-6 py-20 text-center">
+        <div class="float-anim inline-block bg-blue-500/10 text-blue-400 px-4 py-1 rounded-full text-xs font-bold border border-blue-500/20 mb-6">
+            ✨ AI-POWERED ANALYSIS v3.0
+        </div>
+        
+        <h1 class="text-5xl md:text-7xl font-black mb-6 hero-text">Vásároljon biztonságban.</h1>
+        <p class="text-slate-400 text-lg mb-12 max-w-2xl mx-auto">
+            Elemezzük a magyar webáruházakat domain kor, SSL tanúsítvány és gyanús minták alapján.
+        </p>
+
+        <div class="glass p-2 rounded-2xl flex flex-col md:flex-row gap-2 shadow-2xl transition-all hover:border-blue-500/50">
+            <input type="text" id="urlInput" placeholder="https://pelda-bolt.hu" 
+                class="bg-transparent w-full p-4 outline-none text-white placeholder-slate-500">
+            <button onclick="checkSite()" 
+                class="bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-blue-500/20">
+                Elemzés indítása
+            </button>
+        </div>
+
+        <div id="results" class="hidden mt-12 space-y-6">
+            <div class="glass p-10 rounded-3xl border-t-2 border-blue-500">
+                <div id="scoreCircle" class="text-7xl font-black mb-2 text-blue-500">0%</div>
+                <div id="verdict" class="text-2xl font-bold uppercase tracking-widest mb-6">Analizálás...</div>
+                
+                <div class="w-full bg-slate-800 h-2 rounded-full mb-10 overflow-hidden">
+                    <div id="scoreBar" class="h-full bg-blue-500 transition-all duration-1000 w-0"></div>
+                </div>
+
+                <div id="details" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                    </div>
+            </div>
+        </div>
+    </main>
 
     <script>
         async function checkSite() {
             const url = document.getElementById('urlInput').value;
+            if(!url) return;
+
             const resDiv = document.getElementById('results');
             resDiv.classList.remove('hidden');
-            
-            // This calls your Netlify Backend
+            resDiv.scrollIntoView({ behavior: 'smooth' });
+
+            // Call Backend
             const response = await fetch(`/.netlify/functions/check-url?url=${encodeURIComponent(url)}`);
             const data = await response.json();
+
+            // Update UI
+            document.getElementById('scoreCircle').innerText = data.score + "%";
+            document.getElementById('scoreBar').style.width = data.score + "%";
             
-            document.getElementById('score').innerText = data.score + "%";
-            document.getElementById('msg').innerText = "Találatok: " + data.checks.length;
+            const verdict = data.score > 75 ? "BIZTONSÁGOS" : (data.score > 40 ? "VIGYÁZAT" : "VESZÉLYES");
+            const color = data.score > 75 ? "#3b82f6" : (data.score > 40 ? "#f59e0b" : "#ef4444");
+            
+            document.getElementById('verdict').innerText = verdict;
+            document.getElementById('verdict').style.color = color;
+            document.getElementById('scoreCircle').style.color = color;
+            document.getElementById('scoreBar').style.backgroundColor = color;
+
+            const details = document.getElementById('details');
+            details.innerHTML = data.checks.map(c => `
+                <div class="glass p-4 rounded-xl border-l-4 border-blue-500 flex gap-4 items-center">
+                    <i class="fas fa-check-circle text-blue-500"></i>
+                    <div>
+                        <p class="text-xs text-slate-500 uppercase font-bold">Biztonsági pont</p>
+                        <p class="text-sm font-medium">${c.msg}</p>
+                    </div>
+                </div>
+            `).join('');
         }
     </script>
 </body>
